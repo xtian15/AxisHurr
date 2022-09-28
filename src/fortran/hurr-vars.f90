@@ -1,0 +1,96 @@
+MODULE hurr_vars
+  IMPLICIT NONE
+
+  INTEGER, PARAMETER :: M=100,N=25,MP1=M+1,MM1=M-1,NP1=N+1,NM1=N-1
+  INTEGER, PARAMETER :: NTM=5000
+  
+  ! FOR CORRECTNESS CHECK
+  REAL*8 :: LHS, RHS
+  REAL*8 :: &
+       Up(0:MP1,0:NP1),  Vp(0:MP1,0:NP1),  Wp(0:MP1,0:NP1), Pp(0:MP1,0:NP1), &
+       Tp(0:MP1,0:NP1), QVp(0:MP1,0:NP1), QLp(0:MP1,0:NP1)
+  REAL*8 :: &
+       U1p(MP1,N), V1p(M,N), W1p(M,NP1), T1p(M,N), QV1p(M,N), QL1p(M,N), P1p(M,N)
+  REAL*8 :: &
+       UAp(MP1,N), VAp(M,N), WAp(M,NP1), TAp(M,N), QVAp(M,N), QLAp(M,N)
+  ! END FOR CORRECTNESS CHECK
+  
+  ! INPUT STATE VARIABLES
+  REAL*8 :: &  ! initial state variables backup storages
+       inU9(0:MP1,0:NP1), inV9(0:MP1,0:NP1), inW9(0:MP1,0:NP1), inP9(0:MP1,0:NP1), &
+       inT9(0:MP1,0:NP1), inQV9(0:MP1,0:NP1),inQL9(0:MP1,0:NP1), &
+       inU19(MP1,N), inV19(M,N), inW19(M,NP1), inT19(M,N),inQV19(M,N),&
+       inQL19(M,N),  inP19(M,N)
+  
+  REAL*8 :: bkV19(M,N), bkT19(M,N), bkQV19(M,N), bkQL19(M,N)
+
+  REAL*8 :: &  ! STATE VARIABLE FROM FWD MODEL
+       U9(0:MP1,0:NP1),  V9(0:MP1,0:NP1),  W9(0:MP1,0:NP1), P9(0:MP1,0:NP1), &
+       T9(0:MP1,0:NP1), QV9(0:MP1,0:NP1), QL9(0:MP1,0:NP1)
+  REAL*8 :: &  ! ADJOINT VARIABLE CALCULATED IN THIS MODEL
+       U(0:MP1,0:NP1),  V(0:MP1,0:NP1),  W(0:MP1,0:NP1), P(0:MP1,0:NP1), &
+       T(0:MP1,0:NP1), QV(0:MP1,0:NP1), QL(0:MP1,0:NP1)
+
+  REAL*8 :: &
+       U19(MP1,N),V19(M,N),W19(M,NP1),T19(M,N),QV19(M,N),QL19(M,N),P19(M,N)
+  REAL*8 :: &
+       U1(MP1,N), V1(M,N), W1(M,NP1), T1(M,N), QV1(M,N), QL1(M,N), P1(M,N)
+
+  ! BUFFER STATE VARIABLES
+  REAL*8 :: &
+       UA9(MP1,N),VA9(M,N),WA9(M,NP1),TA9(M,N),QVA9(M,N),QLA9(M,N)
+  REAL*8 :: &
+       UA(MP1,N), VA(M,N), WA(M,NP1), TA(M,N), QVA(M,N), QLA(M,N)
+  REAL*8 :: &
+       WS9(M,NP1), UTEMP9, VTEMP9, WTEMP9, TTEMP9, PTEMP9, QVTEMP9, QLTEMP9
+  REAL*8 :: &
+       WS(M,NP1), UTEMP, VTEMP, WTEMP, TTEMP, PTEMP, QVTEMP, QLTEMP
+  ! BUFFER STATE VARIABLES --> STORING VALUES IN SMALL STEPS
+  !                 M,N,NS
+  REAL*8, DIMENSION(:,:,:), ALLOCATABLE :: PS9NS, P19NS
+
+
+  ! LOCAL DEPENDENT VARIABLES
+  REAL*8 :: &
+       PNSURF9, PDST9, TDIF9, TEMP9, ES9, QSS9, R19, QVD9, PNST9, &
+       QRAD9(M,N), UBW9(N), UB9(N), CFACU19, CFACWS9, CFACD9, PS9(M,N), D9(M,N)
+  REAL*8 :: &
+       PNSURF, PDST, TDIF, TEMP, ES, QSS, R1, QVD, PNST, &
+       QRAD(M,N), UBW(N), UB(N), CFACU1, CFACWS, CFACD, PS(M,N), D(M,N)
+  REAL*8 :: QSURF9(M),TSURF9(M),CERS9(M),CDRS9(M)
+  REAL*8 :: QSURF(M), TSURF(M), CERS(M), CDRS(M)
+
+  ! PARAMETERS FROM THE MAIN
+  REAL*8 :: &   ! involved as subroutine parameters
+       PDS, DZTEMP, TB(N), QVB(N), TBS, VMAXTH
+  REAL*8 :: &
+       R(MP1) ,RS(M), Z(NP1),ZS(N), RTBW(N), RQVBW(N), TAU(N), &
+       PN(N), PD(N), RDR, RDZ, RDR2, RDZ2, DTS, &
+       DTL, DZ, XVL2, XHL2, CD, CE, XLDCP, XKAPPA, A1, G
+  ! PARAMETERS FROM INPUT FILE
+  REAL*8 :: &
+       FC, CECD, CD1, XVL, TAUR, RADMAX, VTERM, TMIN, &
+       RMAX, RO, VMAX, TMID, RSST, DT, EPS, RB, &
+       ZB, ETIME, TAVE, PLTIME, TIMMAX, TIMEPL, ROG, ZOG
+  INTEGER :: &
+       NSPONGE, NS
+  REAL*8 :: &
+       TBT, F, RADT, DR, DZ2, DR2, PI, C2, CP, CV, RD, &
+       PNS, TAMB, ESSS, QSP, QVBS, TVBS, CC1, CC2, CC3, CC5, TIME, &
+       ALPHA, PNT, PDT, PNW, TVW, ZSP, &
+       DTSF, DTSG, DTL2, CC4, ZD, E1, D2, D1, VR, TBAR
+
+  INTEGER :: &
+       ISTOP, NZSP, ISTART, I, J, ITIME, NSMALL
+  REAL*8 :: &
+       RC2(N), ZC2(N), CPTDR(N), CPTDZ(N), QS(N), &
+       RHOTVB(N), RHOTVW(NP1), RHOT(N), RHOW(NP1), RTB(N), RQVB(N), &
+       DTSR(M), DTSZ(M,N), DTSRW(N), DTSZW(N), DTLR(M), DTLZ(N),DTSV(M), &
+       A(N), B(N), C(N), E(N), SST(M), ESS(M), DUM(M,N)
+  REAL*8 :: UMN(NTM),VMX(NTM),VMXS(NTM),WMX(NTM), RMX(NTM),PMN(NTM), TTP(NTM)
+  REAL*8 :: VMAXZ(NTM,N)
+
+  REAL*8, PARAMETER :: CSTAR=30.0, EP=0.1, QVBT=0.
+  INTEGER, PARAMETER :: NZTR=1
+
+END MODULE hurr_vars
