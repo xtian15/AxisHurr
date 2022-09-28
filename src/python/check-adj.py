@@ -6,6 +6,9 @@ from datetime import datetime, timedelta
 # for debugging
 #call(['make'])
 
+import sys
+sys.path.append("../fortran")
+
 from axis_hurr import *
 
 H=hurr_vars
