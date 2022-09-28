@@ -1,3 +1,5 @@
 *~
 *.so
 .DS_store
+*.h5
+*.nc

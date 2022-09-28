@@ -11,4 +11,4 @@ SRC=hurr-vars.f90 \
 ${LIB}.so:	${SRC}
 		${FC} ${FC_ARGS} -m ${LIB} ${SRC}
 clean:
-		rm ${LIB}.so
+		rm ${LIB}.*.so

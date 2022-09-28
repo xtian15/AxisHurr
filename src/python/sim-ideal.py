@@ -5,6 +5,9 @@ import matplotlib.pyplot as plt
 from subprocess import call
 from datetime import datetime, timedelta
 
+import sys
+sys.path.append("../fortran")
+
 from axis_hurr import *
 
 H=hurr_vars
